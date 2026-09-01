@@ -138,4 +138,39 @@ app.delete('/api/testcases/module/:module', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Fungsi otomatis buat tabel jika belum ada
+async function initDB() {
+    try {
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS test_cases (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                module VARCHAR(255) NOT NULL,
+                date VARCHAR(50),
+                result VARCHAR(50),
+                severity VARCHAR(50),
+                service_provider VARCHAR(255),
+                phone VARCHAR(50),
+                layanan VARCHAR(255),
+                tier VARCHAR(50),
+                menu_category VARCHAR(255),
+                capability VARCHAR(255),
+                step TEXT,
+                detail TEXT,
+                description TEXT,
+                propose TEXT,
+                evidence_type VARCHAR(100),
+                evidence_name VARCHAR(255),
+                evidence_data LONGTEXT
+            )
+        `);
+        console.log("✅ Tabel test_cases berhasil dicek/dibuat di database Aiven!");
+    } catch (err) {
+        console.error("❌ Gagal membuat tabel:", err.message);
+    }
+}
+
+// Panggil fungsinya sebelum app.listen
+initDB();
+
 app.listen(PORT, () => console.log(`🚀 AVINDHA MySQL Server berjalan di http://localhost:${PORT}`));
