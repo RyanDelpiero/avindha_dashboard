@@ -1,7 +1,8 @@
 // --- KONFIGURASI BACKEND API ---
 // const API_BASE_URL = 'http://localhost:5000/api/testcases';
 // const API_URL = 'https://avindhadashboard-production.up.railway.app';
-const API_BASE_URL = "https://avindhadashboard-production.up.railway.app/api";
+// const API_BASE_URL = "https://avindhadashboard-production.up.railway.app/api";
+const res = await fetch(`${API_BASE_URL}/testcases/General`);
 
 // --- AUTHENTICATION MODULE ---
 const REGISTERED_USERS = {
