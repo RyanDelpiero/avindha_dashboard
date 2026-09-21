@@ -59,7 +59,7 @@ function showDashboardScreen() {
     }
 
     switchMainMenu('ivr');
-    safeCreateIcons();
+    safeCreateIcons(); // <-- Pastikan baris ini ada di sini
 }
 
 // --- DATA & CONFIGURATION ---
@@ -97,7 +97,7 @@ const JOURNEY_MAP = {
     'ivr': [
         { title: 'Mobile & Package Care', desc: 'Pembelian Paket, Info PUK, Ganti Kartu', categories: ['Press 1 Pembelian Paket', 'Press 2 Informasi Nomor PUK', 'Press 3 Informasi Ganti Kartu'] },
         { title: 'Broadband & Eznet Care', desc: 'Informasi, Registrasi, Pengaduan IndiHome', categories: ['Menggunakan Indihome yg sama', '2. Pengaduan Layanan'] },
-        { title: 'Complaint & Agent Escalation', desc: 'Keluhan, Talk to Officer', categories: ['Press 4 Keluhan', 'Press 0 Berbicara dengan Officer'] }
+        { title: 'Complaint & Agent Escalation', desc: 'Keluhan, Talk to Caroline Officer', categories: ['Press 4 Keluhan', 'Press 0 Berbicara dengan Caroline Officer'] }
     ]
 };
 
@@ -883,7 +883,7 @@ function buildDynamicFormFields(item = null) {
                         <option value="OLO">OLO</option>
                     </select>
                 </div>
-                <div>
+                <div id="wrapper-form-phone">
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor Telepon</label>
                     <input type="text" id="form-phone" placeholder="Masukkan nomor telepon..." class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none font-medium">
                 </div>
@@ -904,7 +904,7 @@ function buildDynamicFormFields(item = null) {
                 </div>
             </div>
             
-            <div>
+            <div id="wrapper-form-menu-category">
                 <label class="block text-xs font-semibold text-slate-700 mb-1">Menu Utama</label>
                 <select id="form-menu-category" onchange="onMenuCategoryChange()" required class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:outline-none bg-white font-medium">
                     <option value="" disabled selected>-- Pilih Kategori Menu --</option>
@@ -974,57 +974,77 @@ function onLayananChange(selectedCategory = null) {
     const layanan = document.getElementById('form-layanan')?.value;
     const tierEl = document.getElementById('form-tier');
     const wrapperTier = document.getElementById('wrapper-form-tier');
+    const wrapperPhone = document.getElementById('wrapper-form-phone');
+    const wrapperMenuCategory = document.getElementById('wrapper-form-menu-category');
     const categorySelect = document.getElementById('form-menu-category');
 
     if (!categorySelect) return;
     categorySelect.innerHTML = '';
 
-    if (provider === 'OLO' || layanan === "Indihome / Eznet") {
+    // Sembunyikan field nomor telepon dan menu utama jika OLO, atau atur sesuai kebutuhan
+    if (provider === 'OLO') {
+        if (wrapperPhone) wrapperPhone.classList.add('hidden'); // Sembunyikan input nomor telepon
         if (wrapperTier) wrapperTier.classList.add('hidden');
         if (tierEl) tierEl.removeAttribute('required');
+        
+        // Menu utama OLO dibuat fleksibel, tidak terkunci ke Caroline Officer
+        categorySelect.disabled = false;
+        categorySelect.innerHTML = `
+            <option value="" disabled selected>-- Pilih Kategori Menu --</option>
+            <option value="Layanan Utama OLO">Layanan Provider Non Tsel</option>
+            <option value="Press 0 Berbicara dengan Caroline Officer">Press 0 Berbicara dengan Caroline Officer</option>
+        `;
+        if (selectedCategory) categorySelect.value = selectedCategory;
     } else {
-        if (wrapperTier) wrapperTier.classList.remove('hidden');
-        if (tierEl) tierEl.setAttribute('required', 'required');
-    }
+        if (wrapperPhone) wrapperPhone.classList.remove('hidden'); // Tampilkan kembali untuk Telkomsel
+        
+        if (layanan === "Indihome / Eznet") {
+            if (wrapperTier) wrapperTier.classList.add('hidden');
+            if (tierEl) tierEl.removeAttribute('required');
+        } else {
+            if (wrapperTier) wrapperTier.classList.remove('hidden');
+            if (tierEl) tierEl.setAttribute('required', 'required');
+        }
 
     const isTelkomselPriority = (provider === 'Telkomsel') && (layanan === 'Halo' || layanan === 'Prabayar') && (tierEl?.value === 'Priority');
     const isHaloReguler = (provider === 'Telkomsel' && layanan === 'Halo' && tierEl?.value === 'Reguler');
 
-    if (provider === 'OLO' || isTelkomselPriority) {
-        categorySelect.innerHTML = `<option value="Press 0 Berbicara dengan Officer" selected>Press 0 Berbicara dengan Officer (${provider === 'OLO' ? 'OLO' : 'Priority'} Escalation)</option>`;
-        categorySelect.disabled = true;
-    } else {
-        categorySelect.disabled = false;
-        categorySelect.innerHTML = '<option value="" disabled selected>-- Pilih Kategori Menu --</option>';
-        
+    if (isTelkomselPriority) {
+            categorySelect.innerHTML = `<option value="Press 0 Berbicara dengan Caroline Officer" selected>Press 0 Berbicara dengan Caroline Officer (Priority Escalation)</option>`;
+            categorySelect.disabled = true;
+    }else {
+            categorySelect.disabled = false;
+            categorySelect.innerHTML = '<option value="" disabled selected>-- Pilih Kategori Menu --</option>';
+
         let categories = [];
-        if (isHaloReguler) {
-            categories = [
-                "Press 1 Pembelian Paket",
-                "Press 2 Informasi PUK",
-                "Press 3 Informasi Tagihan Terakhir",
-                "Press 4 Lapor Gangguan",
-                "Press 0 Berbicara dengan Caroline Officer"
-            ];
-        } else if (layanan === "Indihome / Eznet") {
-            categories = [
-                "Press 1 Menggunakan nomor yang sama",
-                "Press 2 Menggunakan Nomor Berbeda"
-            ];
-        } else {
-            categories = [
-                "Press 1 Pembelian Paket", 
-                "Press 2 Informasi Nomor PUK", 
-                "Press 3 Informasi Ganti Kartu", 
-                "Press 4 Keluhan", 
-                "Press 0 Berbicara dengan Officer"
-            ];
-        }
+            if (isHaloReguler) {
+                categories = [
+                    "Press 1 Pembelian Paket",
+                    "Press 2 Informasi PUK",
+                    "Press 3 Informasi Tagihan Terakhir",
+                    "Press 4 Lapor Gangguan",
+                    "Press 0 Berbicara dengan Caroline Officer"
+                ];
+            } else if (layanan === "Indihome / Eznet") {
+                categories = [
+                    "Press 1 Menggunakan nomor yang sama",
+                    "Press 2 Menggunakan Nomor Berbeda"
+                ];
+            } else {
+                categories = [
+                    "Press 1 Pembelian Paket", 
+                    "Press 2 Informasi Nomor PUK", 
+                    "Press 3 Informasi Ganti Kartu", 
+                    "Press 4 Keluhan", 
+                    "Press 0 Berbicara dengan Caroline Officer"
+                ];
+            }
 
         categories.forEach(cat => {
-            const isSelected = selectedCategory && selectedCategory === cat ? 'selected' : '';
-            categorySelect.innerHTML += `<option value="${cat}" ${isSelected}>${cat}</option>`;
-        });
+                const isSelected = selectedCategory && selectedCategory === cat ? 'selected' : '';
+                categorySelect.innerHTML += `<option value="${cat}" ${isSelected}>${cat}</option>`;
+            });
+        }
     }
 
     onMenuCategoryChange();
@@ -1041,13 +1061,15 @@ function onMenuCategoryChange() {
     const category = categorySelect.value;
     stepsContainer.innerHTML = '';
 
+
+    // --- KHUSUS INDIHOME / EZNET ---
     const isHaloReguler = (provider === 'Telkomsel' && layanan === 'Halo' && tier === 'Reguler');
     const isIndihome = (layanan === "Indihome / Eznet");
 
-    if (provider === 'OLO' || category === "Press 0 Berbicara dengan Officer") {
-        renderStepSelect("step-1", "Step 1 : Direct Escalation", ["Press 0 Berbicara dengan Officer"]);
-    } 
-    // --- KHUSUS INDIHOME / EZNET ---
+    if (provider === 'OLO') {
+        renderStepSelect("step-1", "Step 1 : Input Nomor", ["Input nomor (Free Text)"]);
+        renderStepSelect("step-2", "Step 2 : Konfirmasi Nomor", ["Verified", "Not Verified"], "onOloVerificationChange()");
+    }
     else if (isIndihome && category === "Press 1 Menggunakan nomor yang sama") {
         renderStepSelect("step-1", "Step 1 :", ["Informasi tagihan berjalan"]);
         renderStepSelect("step-2", "Step 2 :", ["Dihubungkan ke Agent"]);
@@ -1078,20 +1100,78 @@ function onMenuCategoryChange() {
     } 
     // --- MENU DEFAULT / PRABAYAR ---
     else if (category === "Press 1 Pembelian Paket") {
-        renderStepSelect("step-1", "Sub Menu :", ["Internet Super Seru", "Perpanjangan Masa Aktif", "RoaMAX Umroh 10GB 17 Hari"]);
-        renderStepSelect("step-2", "Konfirmasi Status :", ["Aktivasi Berhasil","Aktivasi Gagal"]);
+        // renderStepSelect("step-1", "Sub Menu :", ["Internet Super Seru", "Perpanjangan Masa Aktif", "RoaMAX Umroh 10GB 17 Hari"]);
+        renderStepSelect("step-1", "Sub Menu :", ["Press 1 Perpanjangan Masa Aktif", "Press 0 Untuk Berbicara dengan Caroline Officer"]);
+        renderStepSelect("step-2", "Konfirmasi Status :", ["Aktivasi Berhasil","Aktivasi Gagal"], "onHaloRegulerPress1Change()");
     } else if (category === "Press 2 Informasi Nomor PUK") {
         renderStepSelect("step-1", "Step 1 : Input NIK diakhir dgn #", ["Masukkan NIK KTP"]);
-        renderStepSelect("step-2", "Step 2 : NIK Terverifikasi", ["Verified", "Not Verified"], "onPukStep2Change()");
+        renderStepSelect("step-2", "Step 2 : NIK Terverifikasi", ["Verified", "Not Verified"], "onPrepaidRegulerNIK()");
+        renderStepSelect("step-3", "Step 3 : Informasi PUK", ["Diterima", "Tidak diterima"]);
     } else if (category === "Press 3 Informasi Ganti Kartu") {
         renderStepSelect("step-1", "Step 1 : Informasi Ganti Kartu", ["Informasi Ganti Kartu OK", "Informasi Ganti Kartu Not OK"]);
-        renderStepSelect("step-2", "Step 2 : Escalation", ["Press 0 Berbicara dengan Officer","Press 7 Kembali ke Menu Utama"]);
+        renderStepSelect("step-2", "Step 2 : Escalation", ["Press 0 Berbicara dengan Caroline Officer","Press 7 Kembali ke Menu Utama"]);
     } else if (category === "Press 4 Keluhan") {
-        renderStepSelect("step-2", "Step 2 : Pilih Keluhan", ["Tidak Bisa Akses Internet", "Tidak Bisa Aktivasi Paket"], "onComplainStep2Change()");
+        renderStepSelect("step-1", "Step 1 : ", ["Kendala Internet", "Kendala Aktivasi Paket", "Berbicara dengan Caroline Officer","Kembali ke Menu Sebelumnya", "Kembali ke Menu Utama"], "onComplainStep2Change()");
+        renderStepSelect("step-2", "Step 2 : ", ["Berbicara dengan Caroline Officer","Kembali ke Menu Sebelumnya", "Kembali ke Menu Utama"]);
     } else {
         renderStepSelect("step-1", "Step 1 : Layanan Navigasi", ["Informasi Layanan", "Pengaduan Layanan"]);
     }
 }
+
+// Handler Alur Prepaid
+
+function onPrepaidRegulerNIK() {
+        renderStepSelect("step-2", "Step 2 : NIK Terverifikasi", ["Verified", "Not Verified"], "onPrepaidRegulerNIKVerif()");
+}
+
+function onPrepaidRegulerNIKVerif() {
+    const statusVal = document.getElementById('ivr-step-2')?.value;
+    removeStepsAfter(2);
+    if (statusVal === "Verified") {
+        renderStepSelect("step-3", "Informasi Nomor PUK :", ["Diterima","Tidak Diterima"],"onPrepaidRegulerNIKVerifInfo()");
+    } else if (statusVal === "Not Verified") {
+        renderStepSelect("step-3", "Tindak Lanjut :", ["Dihubungkan ke Agent"]);
+    }
+}
+
+function onPrepaidRegulerNIKVerifInfo() {
+        renderStepSelect("step-3", "Informasi Nomor PUK :", ["Diterima","Tidak Diterima"], "onPrepaidRegulerNIKVerifInfoReceived()");
+}
+
+function onPrepaidRegulerNIKVerifInfoReceived() {
+    const statusVal = document.getElementById('ivr-step-3')?.value;
+    // removeStepsAfter(2);
+    if (statusVal === "Tidak Diterima") {
+        renderStepSelect("step-4", "Tindak Lanjut :", ["Dihubungkan ke Agent"]);
+    }
+}
+
+// --- HANDLER ALUR OLO (INDOSAT / XL) ---
+function onOloVerificationChange() {
+    const step2Val = document.getElementById('ivr-step-2')?.value;
+    removeStepsAfter(2); // Bersihkan step di bawahnya jika ada perubahan
+
+    if (step2Val === "Verified") {
+        renderStepSelect("step-3", "Step 3 : Menu Lanjutan", [
+            "Informasi Reaktivasi",
+            "Berbicara dengan Caroline Officer",
+            "Kembali ke Menu Sebelumnya",
+            "Untuk kembali ke menu utama"
+        ], "onOloVerifiedSubMenuChange()");
+    } else if (step2Val === "Not Verified") {
+        renderStepSelect("step-3", "Step 3 : Tindak Lanjut", ["Dihubungkan ke Agent"]);
+    }
+}
+
+function onOloVerifiedSubMenuChange() {
+    const step3Val = document.getElementById('ivr-step-3')?.value;
+    removeStepsAfter(3); // Bersihkan step 4 ke bawah
+
+    if (step3Val === "Informasi Reaktivasi") {
+        renderStepSelect("step-4", "Step 4 : Tindak Lanjut", ["Dihubungkan ke Agent"]);
+    }
+}
+
 
 // Handler Alur Indihome Nomor Berbeda
 
