@@ -1,7 +1,6 @@
 require('dotenv').config();
 const mysql = require('mysql2');
 
-// Buat koneksi database
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -11,8 +10,7 @@ const db = mysql.createConnection({
     ssl: { rejectUnauthorized: false }
 });
 
-export default function handler(req, res) {
-    // Set CORS header agar bisa diakses frontend
+module.exports = (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -33,4 +31,4 @@ export default function handler(req, res) {
     } else {
         return res.status(405).json({ error: 'Method not allowed' });
     }
-}
+};
