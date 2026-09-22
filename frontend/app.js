@@ -1,5 +1,5 @@
 // --- KONFIGURASI BACKEND API ---
-const API_BASE_URL = 'http://localhost:5000/api/testcases';
+const API_BASE_URL = '/api/testcases';
 
 // --- AUTHENTICATION MODULE ---
 const REGISTERED_USERS = {
@@ -1547,10 +1547,11 @@ async function clearAllData() {
 }
 
 // INISIALISASI APLIKASI
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        checkAuthSession();
-    } catch (err) {
-        console.error("Gagal melakukan inisialisasi awal dashboard:", err);
+document.addEventListener("DOMContentLoaded", () => {
+    checkAuthSession(); // Jalankan cek sesi login terlebih dahulu
+    
+    // Panggil fungsi utama untuk menarik data dari MySQL Aiven
+    if (activeUser) {
+        loadDataFromSQL();
     }
 });
