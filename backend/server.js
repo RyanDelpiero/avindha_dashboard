@@ -26,9 +26,8 @@ app.use(cors());
 app.use(express.json());
 
 // Contoh rute API untuk mengambil data dari database Aiven
-app.get('/api/dashboard-data', (req, res) => {
-    // Ganti 'nama_tabel_anda' dengan tabel yang sesuai dari file .sql yang sudah di-import
-    const query = 'SELECT * FROM test_cases'; 
+app.get('/api/testcases', (req, res) => {
+    const query = 'SELECT * FROM test_cases';
     
     db.query(query, (err, results) => {
         if (err) {
