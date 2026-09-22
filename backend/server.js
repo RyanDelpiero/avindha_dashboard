@@ -25,9 +25,20 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
-// Contoh rute API untuk mengambil data dari database Aiven
+// Endpoint khusus untuk test koneksi database secara langsung
+app.get('/api/test-db', (req, res) => {
+    db.query('SELECT 1 + 1 AS solution', (err, results) => {
+        if (err) {
+            console.error('❌ Tes koneksi database gagal:', err);
+            return res.status(500).json({ status: 'Error', error: err.message });
+        }
+        res.json({ status: 'Success', message: 'Berhasil terhubung ke database Aiven!', data: results });
+    });
+});
+
+// Rute API untuk mengambil data dari tabel test_cases
 app.get('/api/testcases', (req, res) => {
-    const query = 'SELECT * FROM test_cases';
+    const query = 'SELECT * FROM test_cases'; 
     
     db.query(query, (err, results) => {
         if (err) {
