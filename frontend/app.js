@@ -120,18 +120,20 @@ function safeCreateIcons() {
 // FETCH DATA DARI REST API MYSQL
 async function loadDataFromSQL() {
     try {
-        const response = await fetch(`${API_BASE_URL}/${currentMainMenu}`);
+        // Ubah pemanggilan fetch langsung ke endpoint utama
+        const response = await fetch('/api/testcases');
         if (!response.ok) throw new Error("Gagal mengambil data dari database server.");
         
         const data = await response.json();
 
+        // Simpan data ke variabel modul yang aktif
         if (currentMainMenu === 'ivr') ivrData = data;
         else if (currentMainMenu === 'grapari-indihome') grapariIndihomeData = data;
         else grapariMobileData = data;
 
         // Update seluruh komponen UI
         updateDashboard();
-        renderJourneyImpactCards(data); // <-- Pastikan dipanggil di sini
+        renderJourneyImpactCards(data);
         renderTable();
         safeCreateIcons();
     } catch (err) {
@@ -1343,6 +1345,8 @@ function closeModal() {
 // SIMPAN TEST CASE KE MYSQL BACKEND REST API (POST/PUT)
 async function saveTestCase(e) {
     e.preventDefault();
+    console.log("Tombol simpan diklik, fungsi saveTestCase berjalan!"); // <-- Tambahkan ini
+
     const idVal = document.getElementById('form-id').value;
 
     let newItem = {
